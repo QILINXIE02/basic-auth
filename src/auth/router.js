@@ -15,8 +15,18 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-router.post('/signin', basicAuth, (req, res) => {
-  res.status(200).json(req.user);
+router.post('/signin', basicAuth, async (req, res) => {
+  try {
+    // If basicAuth middleware has already added user to request object
+    if (req.user) {
+      res.status(200).json(req.user);
+    } else {
+      // If user not found in basicAuth middleware, return error
+      res.status(404).send('User not found');
+    }
+  } catch (error) {
+    res.status(403).send('Invalid Login');
+  }
 });
 
 module.exports = router;
