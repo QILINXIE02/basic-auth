@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt');
 
 module.exports = async function basicAuth(req, res, next) {
   if (!req.headers.authorization) {
-    return res.status(401).send('Authorization header is required');
+    return res.status(401).json({ error: 'Authorization header is required' });
   }
 
   const encodedCreds = req.headers.authorization.split(' ')[1];
@@ -16,16 +16,17 @@ module.exports = async function basicAuth(req, res, next) {
   try {
     const user = await Users.findOne({ where: { username } });
     if (!user) {
-      throw new Error('User not found');
+      return res.status(404).json({ error: 'User not found' });
     }
     const valid = await bcrypt.compare(password, user.password);
     if (valid) {
-      req.user = user;
+      req.user = user; // Set the user object on the request for later use
       next();
     } else {
-      throw new Error('Invalid Password');
+      return res.status(401).json({ error: 'Invalid Password' });
     }
   } catch (error) {
-    res.status(403).send('Invalid Login');
+    console.error('Error in basicAuth middleware:', error);
+    res.status(500).json({ error: 'Server Error' });
   }
 };
